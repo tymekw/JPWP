@@ -1,0 +1,18 @@
+@font-face {
+    src: url("/Starjhol.ttf");
+}
+.button {
+    -fx-font-family: "Star Jedi Hollow";
+    -fx-text-fill: #ffe81f;
+    -fx-background-color: TRANSPARENT;
+    -fx-font-size: 30px;
+}
+.label{
+    -fx-font-family: "Star Jedi Hollow";
+    -fx-text-fill: #ffe81f;
+    -fx-background-color: TRANSPARENT;
+    -fx-font-size: 20px;
+}
+.root{
+    -fx-background-image: url(/blue-and-purple-cosmic-sky-956999.jpg);
+}
