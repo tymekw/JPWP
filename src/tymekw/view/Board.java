@@ -6,6 +6,7 @@ import javafx.scene.input.MouseEvent;
 import model.FieldType;
 import model.PawnType;
 import model.Player;
+import model.Position;
 
 
 public class Board {
@@ -76,6 +77,16 @@ public class Board {
         dst.setPawn(src.pawnType);
     }
 
+    public void showMove(Position src, Position dst) {
+        System.out.println("doing shppw move/perform");
+        Tile source = tiles[src.x][src.y];
+        Tile destination = tiles[dst.x][dst.y];
+        source.removePawn();
+        destination.setPawn(source.pawnType);
+        //showMove(source,destination);
+    }
+
+
     public void removePawn(int x, int y){
         tiles[x][y].removePawn();
     }
@@ -96,5 +107,8 @@ public class Board {
     public void removeFocusedPawn(){
         isPawnFocused = false;
         focusedPawn = null;
+    }
+    public void promotePawn(Position position){
+        tiles[position.x][position.y].promote();
     }
 }

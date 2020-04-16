@@ -2,11 +2,11 @@ package model;
 
 public class JumpRule implements Rule {
     JumpAnalyzer analyzer;
-    CheckersManager checkersManager;
+    //CheckersManager checkersManager;
     @Override
     public boolean isValid(Field src, Field dst, Board board) {
-        analyzer  = new JumpAnalyzer(board, board.checkersManager);
-        checkersManager = board.checkersManager;
+        analyzer  = new JumpAnalyzer(board);
+        //checkersManager = board.checkersManager;
         PawnType type = src.getPawnType();
         if(!analyzer.isJump(src, dst)) return true;
         //if(type == PawnType.WHITE_KING || type == PawnType.BLACK_KING) return true;
@@ -18,7 +18,6 @@ public class JumpRule implements Rule {
         int preyX = (src.position.x + dst.position.x) / 2;
         int preyY = (src.position.y + dst.position.y) / 2;
         int dirY = preyY - src.position.y;
-        System.out.println("==========");
         System.out.println(1);
         if(!analyzer.isJumpDiagonal(src,dst)) return false;
         System.out.println(2);
@@ -37,9 +36,9 @@ public class JumpRule implements Rule {
     }
 
     boolean isValidMultiJump(Field src){
-        LastMoveInfo info = checkersManager.lastMoveInfo;
+        Move info = CheckersManager.lastMoveInfo;
         Field lastMoveDestination = info.getDestination();
-        boolean isPartOfMultiJump = checkersManager.isPawnInTurn(lastMoveDestination);
+        boolean isPartOfMultiJump = CheckersManager.currentPlayer.isMyPawn(lastMoveDestination.getPawnType());
         if(isPartOfMultiJump){
             return lastMoveDestination.equals(src);
         }

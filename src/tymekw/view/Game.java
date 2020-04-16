@@ -16,7 +16,6 @@ public class Game {
     public Game(GameWindow gameWindow) {
         this.gameWindow = gameWindow;
         gameBorder = new BorderPane();
-        board = new Board(gameWindow);
         root = new StackPane();
     }
 
@@ -54,5 +53,9 @@ public class Game {
 
     public StackPane getRoot() {
         return root;
+    }
+
+    public void setBoard(Board board) {
+        this.board = board;
     }
 }

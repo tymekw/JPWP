@@ -3,22 +3,22 @@ package model;
 import java.util.List;
 
 public class CheckersManager {
-    private Player whitePlayer, blackPlayer;
+    public Player whitePlayer, blackPlayer;
     MoveValidator moveValidator;
     Board board;
-    public Player currentPlayer;
-    LastMoveInfo lastMoveInfo;
+    static public Player currentPlayer;
+    static Move lastMoveInfo;
     boolean isPromotion;
     boolean isPlayerDefeated;
 
     public CheckersManager(){
-        whitePlayer = new Player(PawnType.WHITE, PawnType.WHITE_KING);
-        blackPlayer = new Player(PawnType.BLACK, PawnType.BLACK_KING);
+        whitePlayer = new Player(PawnType.WHITE, PawnType.WHITE_KING,PlayerType.WHITE_PLAYER);
+        blackPlayer = new Player(PawnType.BLACK, PawnType.BLACK_KING,PlayerType.BLACK_PLAYER);
         currentPlayer = blackPlayer;
         moveValidator = new MoveValidator(new EnglishRuleSet());
-        board = new Board(this);
+        board = new Board();
         board.init();
-        lastMoveInfo = new LastMoveInfo();
+        lastMoveInfo = new Move();
         isPlayerDefeated = false;
     }
 
@@ -30,8 +30,17 @@ public class CheckersManager {
         return lastMoveInfo.isCaptured();
     }
 
+    public void performMove(List<Move> moves){
+        Position position = moves.get(moves.size()-1).getDestination().position;
+        moves.forEach(e -> board.performMove(e));
+        lastMoveInfo = moves.get(moves.size()-1);
+        checkPromotion(board.getField(position));
+    }
+
     public void move(Position src, Position dst){
-        JumpAnalyzer analyzer = new JumpAnalyzer(board, this);
+        JumpAnalyzer analyzer = new JumpAnalyzer(board);
+
+
         boolean isAnyJumpBeforeMove, isAnyJumpAfterMove;
         Field source = board.getField(src);
         Field destination = board.getField(dst);
@@ -43,12 +52,10 @@ public class CheckersManager {
         lastMoveInfo.setCaptured(false);
 
         if(analyzer.isJump(source,destination)){
-            System.out.println("im in move, isJump=true");
             List<Field> pawnsToRemove = analyzer.getJumpedOverPawns(source,destination);
             if(pawnsToRemove.size() == 0){
                 lastMoveInfo.setCaptured(false);
             }else{
-                //System.out.println("usuwamy piona ofiare");
                 lastMoveInfo.setCaptured(true);
                 lastMoveInfo.setCaptured(pawnsToRemove.get(0));//!!!!!!!
                 pawnsToRemove.forEach(e ->{
@@ -56,14 +63,10 @@ public class CheckersManager {
                 });
                 checkDefeat();
             }
-            //można zrobić ogólnie, lastMoveInfo captured zrobic na tablice usuwać wszystkie przeskoczone
         }
         isAnyJumpAfterMove = analyzer.isAnyJump();
-        //board.printBoard();
         checkPromotion(board.getField(dst));
         changePlayerIfPossible(isAnyJumpBeforeMove, isAnyJumpAfterMove);
-
-        //System.out.println("board.isAnyJump: "+board.isAnyJump());
     }
 
     public Position getCaptured(){
@@ -73,16 +76,6 @@ public class CheckersManager {
     public boolean hasAnyAction(Position position){
         Field field = board.getField(position);
         return field.isPawn() && currentPlayer.isMyPawn(field.getPawnType());
-    }
-
-    //To be worked on
-    public boolean isAnyJump(){
-        JumpAnalyzer analyzer = new JumpAnalyzer(board,this);
-        return analyzer.isAnyJump();
-    }
-
-    boolean isPawnInTurn(Field field){
-        return currentPlayer.isMyPawn(field.getPawnType());
     }
 
     void checkPromotion(Field field){
@@ -105,27 +98,29 @@ public class CheckersManager {
         }
         return false;
     }
-
+    //gotta remove change player form promote
     void promote(Field field){
         isPromotion = true;
         if(field.getPawnType() == PawnType.WHITE){
-            field.setPawn(PawnType.WHITE_KING);
+            //System.out.println("PROMOTE WHITE PROMOTE WHYITE 1");
+            field.setPawn1(PawnType.WHITE_KING);
         }else{
-            field.setPawn(PawnType.BLACK_KING);
+            field.setPawn1(PawnType.BLACK_KING);
+            changePlayer();
         }
-        changePlayer();
+        //changePlayer();
     }
 
     void changePlayerIfPossible(boolean before, boolean after){
-        System.out.println("before: "+before+"  after: "+after);
+        //System.out.println("before: "+before+"  after: "+after);
         if(isPromotion) return;
         if(!before){
             changePlayer();
         }else if(before && !after){
             changePlayer();
         }else if(before && after){
-            JumpAnalyzer analyzer = new JumpAnalyzer(board, this);
-            if(analyzer.canPawnJump(lastMoveInfo.getDestination())){
+            JumpAnalyzer analyzer = new JumpAnalyzer(board);
+            if(!analyzer.getPawnJumps(lastMoveInfo.getDestination()).isEmpty()){
                 //do not change player
             }else{
                 changePlayer();
@@ -133,7 +128,7 @@ public class CheckersManager {
         }
     }
 
-    void changePlayer(){
+    public void changePlayer(){
         if(currentPlayer.equals(whitePlayer)){
             currentPlayer = blackPlayer;
         }else{
@@ -157,9 +152,13 @@ public class CheckersManager {
 
     public void restartGame(){
         board.init();
-        lastMoveInfo = new LastMoveInfo();
+        lastMoveInfo = new Move();
         isPlayerDefeated = false;
         currentPlayer = blackPlayer;
         isPromotion = false;
+    }
+
+    public Board getBoardCopy(){
+        return board.copyBoard();
     }
 }

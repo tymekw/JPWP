@@ -6,12 +6,15 @@ public class Field {
     private PawnType pawn;
     Position position;
 
+    public Field(){
+    }
+
     public Field(FieldType type){
         this.type = type;
     }
 
-    void setPawn(PawnType type){
-        isPawn = true;
+    void setPawn1(PawnType type){
+        setPawnBoolean(true);
         this.pawn = type;
     }
 
@@ -29,5 +32,25 @@ public class Field {
 
     public void setPosition(Position position) {
         this.position = position;
+    }
+
+    public void setPawnBoolean(boolean pawn) {
+        isPawn = pawn;
+    }
+
+    public void setType(FieldType type) {
+        this.type = type;
+    }
+
+    public FieldType getType() {
+        return type;
+    }
+
+    public PawnType getPawn() {
+        return pawn;
+    }
+
+    public Position getPosition() {
+        return position;
     }
 }

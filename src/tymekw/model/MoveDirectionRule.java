@@ -3,12 +3,18 @@ package model;
 public class MoveDirectionRule implements Rule {
     @Override
     public boolean isValid(Field src, Field dst, Board board) {
-        if(board.checkersManager.isAnyJump()) return true;
+        JumpAnalyzer analyzer  = new JumpAnalyzer(board);
+        if(analyzer.isAnyJump()) return true;
         PawnType myType = src.getPawnType();
-        if (myType == PawnType.WHITE) {
+
+        return canMove(src,dst);
+    }
+
+    boolean canMove(Field src, Field dst){
+        if(src.getPawnType() == PawnType.WHITE){
             return canWhiteMove(src,dst);
-        } else if (myType == PawnType.BLACK) {
-            return canBlackMove(src, dst);
+        }else if(src.getPawnType() == PawnType.BLACK){
+            return canBlackMove(src,dst);
         }
         return true;
     }

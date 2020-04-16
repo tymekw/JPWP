@@ -11,7 +11,7 @@ public class EnglishRuleSet extends RuleSet {
 
     private void addRules(){
         add(new ProperFieldRule());
-        add(new PawnInTurnRole());
+        //add(new PawnInTurnRole());
         add(new JumpIfPossibleRule());
        // add(new KingMoveRule());
         add(new JumpRule());

@@ -4,7 +4,7 @@ public class JumpIfPossibleRule implements Rule {
     JumpAnalyzer analyzer;
     @Override
     public boolean isValid(Field src, Field dst, Board board) {
-        analyzer  = new JumpAnalyzer(board, board.checkersManager);
+        analyzer  = new JumpAnalyzer(board);
 
         boolean isAnyJump = analyzer.isAnyJump();
 

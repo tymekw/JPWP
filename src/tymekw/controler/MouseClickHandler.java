@@ -5,11 +5,11 @@ import javafx.application.Platform;
 import javafx.event.EventHandler;
 
 import javafx.scene.input.MouseEvent;
-import model.CheckersManager;
-import model.PawnType;
-import model.Position;
+import model.*;
 import view.Board;
 import view.Tile;
+
+import java.util.List;
 
 public class MouseClickHandler implements EventHandler<MouseEvent> {
     GameWindow gameWindow;
@@ -31,7 +31,6 @@ public class MouseClickHandler implements EventHandler<MouseEvent> {
     }
 
     public void handleClick(Tile tile){
-
             if(board.isPawnFocused()) {
                 actionWhenFocused(tile);
             }else{
@@ -45,21 +44,8 @@ public class MouseClickHandler implements EventHandler<MouseEvent> {
             src.removeFocus(src.pawnType);
             dst.focus(dst.pawnType);
             board.setFocusedPawn(dst);
-            //if(isJump
-            //board.focusPawn(tile);
-        }else {
+        } else {
             if(gameWindow.checkersManager.isPossibleMove(src.getPosition(),dst.getPosition())){
-                /*if(checkersManager.isAnyJump()){
-                    checkersManager.jump(src.getPosition(),dst.getPosition());
-                    board.showJump(src,dst);
-                }else {
-                    checkersManager.move(src.getPosition(), dst.getPosition());
-                    board.showMove(src, dst);
-                    //System.out.println("board.getFocusedPawn().pawnType == "+board.getFocusedPawn().pawnType);
-                }
-
-                 */
-
                 checkersManager.move(src.getPosition(),dst.getPosition());
                 board.showMove(src,dst);
                 if(checkersManager.isPlayerDefeated()){
@@ -78,17 +64,29 @@ public class MouseClickHandler implements EventHandler<MouseEvent> {
                 board.getFocusedPawn().removeFocus(pawnType);
                 board.removeFocusedPawn();
                 updatePlayer();
+                if(CheckersManager.currentPlayer.getPlayerType() == PlayerType.WHITE_PLAYER){
+                    AIPlayer aiPlayer = new AIPlayer(checkersManager.whitePlayer,checkersManager.blackPlayer);
+                    List<Move> computerMove = aiPlayer.getMove(checkersManager.getBoardCopy(),checkersManager.whitePlayer);
+                    checkersManager.performMove(computerMove);
+                    System.out.println("computerMove len: "+computerMove.size());
+                    gameWindow.performMove(computerMove);
+                    if(checkersManager.isPromotion()){
+                        Move lastMove = computerMove.get(computerMove.size()-1);
+                        Position lastMovePos = lastMove.getDestination().getPosition();
+                        board.promotePawn(lastMovePos);
+                    }
+                    checkersManager.changePlayer();
+                }
             }
         }
     }
 
     void updatePlayer(){
-        board.setCurrentPlayer(checkersManager.currentPlayer);
+        board.setCurrentPlayer(CheckersManager.currentPlayer);
     }
 
     private void actionWhenNotFocused(Tile tile){
         if(checkersManager.hasAnyAction(tile.getPosition())) {
-            //if(checkersManager.isAnyJump())
             tile.focus(tile.pawnType);
             board.setFocusedPawn(tile);
         }

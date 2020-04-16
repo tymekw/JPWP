@@ -5,43 +5,96 @@ import java.util.List;
 
 public class JumpAnalyzer {
     Board board;
-    CheckersManager checkersManager;
+    Player player;
+    //CheckersManager checkersManager;
 
-    public JumpAnalyzer(Board board, CheckersManager checkersManager) {
+    public JumpAnalyzer(Board board) {
         this.board = board;
-        this.checkersManager = checkersManager;
+        player = CheckersManager.currentPlayer;
+    }
+
+    public JumpAnalyzer(Board board, Player player) {
+        this.board = board;
+        this.player = player;
     }
 
     boolean isAnyJump(){
+        return !getAvailableJumps().isEmpty();
+    }
+
+    List<Move> getAvailableJumps(){
+        List<Move> availableJumps = new LinkedList<>();
         for(int i=0; i<board.ROWS; i++){
             for(int j=0; j<board.COLS;j++){
-                if(checkersManager.isPawnInTurn(board.getField(i,j)) && board.getField(i,j).isPawn()){
-                    if(canPawnJump(board.getField(i,j))){
-                        return true;
-                    }
+                if(player.isMyPawn(board.getField(i,j).getPawnType()) && board.getField(i,j).isPawn()){
+                   List<Move> jumps = getPawnJumps(board.getField(i,j));
+                   if(!jumps.isEmpty()) availableJumps.addAll(jumps);
                 }
             }
         }
-        return false;
+        return availableJumps;
     }
 
-     boolean canPawnJump(Field field){
+     List<Move> getPawnJumps(Field field){
         int x = field.position.x;
         int y = field.position.y;
         int row_limit = board.ROWS-1;
         int column_limit = board.COLS-1;
+        List<Move> jumps = new LinkedList<>();
 
         for (int i = Math.max(0, x - 1); i <= Math.min(x + 1, row_limit); i++) {
             for (int j = Math.max(0, y - 1); j <= Math.min(y + 1, column_limit); j++) {
-                //if (i != x && j != y) {//only corners
-                if(canJumpThroughNeighbor(field,board.getField(i,j))){
-                    return true;
+                if (i != x && j != y) {//only corners
+                    Field neighbor = board.getField(i,j);
+                    if(canJumpThroughNeighbor(field,neighbor)){
+                        Position dst = countJumpDestination(field,neighbor);
+                        Move move = new Move(null,field, board.getField(dst.x,dst.y),neighbor,true);
+                        jumps.add(move);
+                    }
                 }
-                //}
             }
         }
-        return  false;
+        return jumps;
     }
+
+    List<Move> getPawnMoves(Field field){
+        int x = field.position.x;
+        int y = field.position.y;
+        int row_limit = board.ROWS-1;
+        int column_limit = board.COLS-1;
+        List<Move> moves = new LinkedList<>();
+
+        for (int i = Math.max(0, x - 1); i <= Math.min(x + 1, row_limit); i++) {
+            for (int j = Math.max(0, y - 1); j <= Math.min(y + 1, column_limit); j++) {
+                if (i != x && j != y) {//only corners
+                    Field neighborField = board.getField(i,j);
+                    if(canMove(field,neighborField) && isDestinationAvailable(neighborField.position.x, neighborField.position.y)){
+                        Move move = new Move(null,field,neighborField,null,false);
+                        moves.add(move);
+                    }
+                }
+            }
+        }
+        return moves;
+    }
+
+    List<Move> getAvailablePawnsMoves(){
+        List<Move> availableMoves = new LinkedList<>();
+        for(int i=0; i<board.ROWS; i++){
+            for(int j=0; j<board.COLS; j++){
+                if(player.isMyPawn(board.getField(i,j).getPawnType()) && board.getField(i,j).isPawn()){
+                    List<Move> moves = getPawnMoves(board.getField(i,j));
+                    if(!moves.isEmpty()){
+                        availableMoves.addAll(moves);
+                    }
+                }
+            }
+        }
+        return availableMoves;
+
+    }
+
+
 
     private boolean canJumpThroughNeighbor(Field src, Field neighbor){
         int directionX = neighbor.position.x - src.position.x;
@@ -54,7 +107,7 @@ public class JumpAnalyzer {
         if (!isNeighborPrey(neighbor.position.x, neighbor.position.y)) return false;
         if (!isDestinationAvailable(dstX, dstY)) return false;
         if(type == PawnType.BLACK_KING || type == PawnType.WHITE_KING) return true;
-        if(!isJumpInProperDirection(src,directionY)) return false;
+        if(!isJumpInProperDirection(src, directionY)) return false;
 
         return true;
     }
@@ -95,6 +148,16 @@ public class JumpAnalyzer {
         return (getJumpLengthX(src,dst)>1 || getJumpLengthY(src, dst)>1);
     }
 
+    Position countJumpDestination(Field src, Field neighbor){
+        int directionX = neighbor.position.x - src.position.x;
+        int directionY = neighbor.position.y - src.position.y;
+
+        int dstX = neighbor.position.x + directionX;
+        int dstY = neighbor.position.y + directionY;
+
+        return new Position(dstX,dstY);
+    }
+
     boolean isDestinationAvailable(int dstX, int dstY){
         if(dstX < 0 || dstX > board.ROWS-1) return false;//-1 bo to index w tablicy
         if(dstY < 0 || dstY > board.COLS-1) return false;
@@ -104,6 +167,33 @@ public class JumpAnalyzer {
 
     boolean isNeighborPrey(int preyX, int preyY){
         Field prey = board.getField(preyX,preyY);
-        return prey.isPawn() && !checkersManager.isPawnInTurn(prey);
+        return prey.isPawn() && !player.isMyPawn(prey.getPawnType());
+    }
+
+    boolean canMove(Field src, Field dst){
+        if(src.getPawnType() == PawnType.WHITE){
+            return canWhiteMove(src,dst);
+        }else if(src.getPawnType() == PawnType.BLACK){
+            return canBlackMove(src,dst);
+        }
+        return true;
+    }
+
+    private boolean canWhiteMove(Field src, Field dst){
+        if (dst.position.y == src.position.y + 1) {
+            return (dst.position.x == src.position.x +1 || dst.position.x == src.position.x -1);
+        }
+        return false;
+    }
+
+    private boolean canBlackMove(Field src, Field dst){
+        if (dst.position.y == src.position.y - 1) {
+            return (dst.position.x == src.position.x +1 || dst.position.x == src.position.x -1);
+        }
+        return false;
+    }
+
+    public void setBoard(Board board) {
+        this.board = board;
     }
 }
